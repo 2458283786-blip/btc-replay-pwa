@@ -125,9 +125,10 @@
   <div class="field">
     <label>数据源</label>
     <select id="dataSource">
-      <option value="binance" selected>Binance 实时行情</option>
-      <option value="demo">内置模拟行情（离线可用）</option>
+      <option value="bundle" selected>本地数据包（内置，秒开）</option>
+      <option value="demo">内置模拟行情</option>
     </select>
+    <div class="hint" id="dataPackHint" style="margin-top:6px;">正在读取本地数据包…</div>
   </div>
   <div class="field-row">
     <div class="field"><label>范围起始</label><input type="date" id="rangeStart"></div>
@@ -138,7 +139,7 @@
     <input type="number" id="contextBars" value="100" min="20" max="300" step="10">
   </div>
   <button class="btn-full" id="drawBtn">🎲 随机抽取新片段</button>
-  <div class="hint">实时数据来自 Binance 公开接口；如果网络无法访问，可在上方切换到内置模拟行情，练习功能完全不受影响。抽取新片段会清空当前持仓、交易记录和画线。首次使用建议在浏览器菜单里「添加到主屏幕」。</div>
+  <div class="hint">本地数据包内置于 App，无需联网拉取，秒开。抽取新片段会清空当前持仓、交易记录和画线。首次使用建议在浏览器菜单里「添加到主屏幕」。</div>
 </div>
 
 <!-- 开仓（止盈止损） -->
