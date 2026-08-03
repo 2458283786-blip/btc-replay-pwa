@@ -1,4 +1,4 @@
-const CACHE_NAME = 'btc-replay-v1';
+const CACHE_NAME = 'btc-replay-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -31,29 +31,14 @@ self.addEventListener('fetch', e => {
   const relPath = url.pathname.split('/').filter(Boolean).join('/');
   const rel = './' + relPath;
 
-  // Binance 行情接口：网络优先，失败时尝试缓存兜底
-  if (url.hostname.includes('binance.com')) {
+  // 同源资源 + Binance 行情：网络优先，成功后更新缓存；离线时用缓存兜底
+  if (url.hostname.includes('binance.com') || url.origin === self.location.origin) {
     e.respondWith(
       fetch(e.request).then(res => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then(c => c.put(e.request, copy)).catch(() => {});
         return res;
-      }).catch(() => caches.match(e.request))
-    );
-    return;
-  }
-
-  // 页面与应用脚本：缓存优先，后台更新
-  if (e.request.mode === 'navigate' || APP_SHELL.includes(rel)) {
-    e.respondWith(
-      caches.match(e.request).then(cached => {
-        const fetched = fetch(e.request).then(res => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, copy)).catch(() => {});
-          return res;
-        }).catch(() => cached);
-        return cached || fetched;
-      })
+      }).catch(() => caches.match(e.request).then(r => r))
     );
     return;
   }
@@ -67,7 +52,7 @@ self.addEventListener('fetch', e => {
           const copy = res.clone();
           caches.open(CACHE_NAME).then(c => c.put(e.request, copy)).catch(() => {});
           return res;
-        });
+        }).catch(() => cached);
       })
     );
   }
