@@ -64,6 +64,7 @@ input,select,textarea{user-select:text;-webkit-user-select:text;}
   border:1px solid var(--border);color:var(--text-dim);font-size:13px;font-weight:600;
 }
 .tf-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.tf-chip.disabled{opacity:.32;pointer-events:none;}
 
 /* ---------- chart ---------- */
 .chart-wrap{position:relative;flex:1 1 auto;min-height:0;background:var(--bg);}
