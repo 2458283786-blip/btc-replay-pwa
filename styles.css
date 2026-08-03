@@ -27,8 +27,11 @@
 html,body{
   margin:0;padding:0;background:var(--bg);color:var(--text);
   font-family:var(--sans);height:100%;overflow:hidden;overscroll-behavior:none;
+  text-size-adjust:100%;-webkit-text-size-adjust:100%;
+  -webkit-touch-callout:none;user-select:none;-webkit-user-select:none;
 }
-button{font-family:var(--sans);-webkit-user-select:none;user-select:none;cursor:pointer;font-size:14px;}
+button{font-family:var(--sans);-webkit-user-select:none;user-select:none;cursor:pointer;font-size:14px;touch-action:manipulation;}
+input,select,textarea{user-select:text;-webkit-user-select:text;}
 ::-webkit-scrollbar{display:none;}
 
 .app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
@@ -65,7 +68,8 @@ button{font-family:var(--sans);-webkit-user-select:none;user-select:none;cursor:
 /* ---------- chart ---------- */
 .chart-wrap{position:relative;flex:1 1 auto;min-height:0;background:var(--bg);}
 #chart-container{width:100%;height:100%;}
-#drawOverlay{position:absolute;top:0;left:0;pointer-events:none;touch-action:none;}
+#chart-container,#drawOverlay{touch-action:none;}
+#drawOverlay{position:absolute;top:0;left:0;pointer-events:none;}
 
 .hud-mini{
   position:absolute;top:8px;left:10px;z-index:5;
@@ -73,6 +77,7 @@ button{font-family:var(--sans);-webkit-user-select:none;user-select:none;cursor:
   font-family:var(--mono);font-size:11px;color:var(--text-dim);
   background:var(--panel);border:1px solid var(--border);border-radius:10px;
   box-shadow:var(--shadow);padding:6px 10px;max-width:calc(100% - 20px);overflow-x:auto;
+  pointer-events:none;
 }
 .hud-mini b{color:var(--text);font-weight:700;margin-left:3px;}
 .hud-mini .up{color:var(--up);}.hud-mini .down{color:var(--down);}
@@ -123,9 +128,10 @@ button{font-family:var(--sans);-webkit-user-select:none;user-select:none;cursor:
 .dock{
   flex:0 0 auto;background:var(--panel);border-top:1px solid var(--border);
   padding:8px 12px calc(8px + var(--safe-bottom));z-index:20;
+  display:grid;grid-template-columns:1fr;gap:8px;
 }
 .dock-row{display:flex;gap:8px;align-items:center;}
-.dock-row + .dock-row{margin-top:8px;}
+.dock-row.span2{grid-column:1 / -1;}
 .dock-btn{
   flex:1;height:46px;border-radius:11px;background:var(--panel-alt);
   border:1px solid var(--border-bright);color:var(--text);font-size:13.5px;font-weight:700;
@@ -151,6 +157,28 @@ button{font-family:var(--sans);-webkit-user-select:none;user-select:none;cursor:
 .pnl-box button{
   background:var(--panel);border:1px solid var(--border-bright);color:var(--text);
   border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:700;
+}
+
+/* ---------- 横屏适配 ---------- */
+@media (orientation: landscape) and (max-height: 560px){
+  .brand-sub{display:none;}
+  .topbar{padding:calc(4px + var(--safe-top)) 12px 4px;}
+  .icon-btn{width:34px;height:34px;font-size:15px;border-radius:9px;}
+  .tf-strip{padding:6px 10px;gap:6px;}
+  .tf-chip{padding:5px 12px;font-size:12px;}
+  #vol-container{display:none;}
+  .progress-strip{padding:4px 12px 0;}
+  .progress-text{padding-top:2px;}
+  .dock{grid-template-columns:1fr 1fr;gap:6px 8px;padding:6px 10px calc(6px + var(--safe-bottom));}
+  .dock-btn,.pnl-box{height:40px;font-size:13px;border-radius:9px;}
+  .pnl-box{padding:0 8px;}
+  .pnl-val{font-size:14px;}
+  .tp-sl{display:none;}
+  #speedSel{height:40px;font-size:12px;flex:0 0 84px;}
+  .hud-mini{top:6px;left:8px;font-size:10px;padding:4px 8px;gap:8px;}
+  .draw-toolbar{padding:5px;}
+  .draw-toolbar button{padding:7px 10px;font-size:12px;}
+  #status-toast{bottom:calc(64px + var(--safe-bottom));}
 }
 
 /* ---------- sheets ---------- */
