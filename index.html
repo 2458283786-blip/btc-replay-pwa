@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1e6fff">
+<meta name="description" content="随机截取 K 线，练习趋势判断的复盘训练工具">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>K线复盘 · 趋势判断训练</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">K线复盘<span class="brand-sub">趋势判断训练</span></div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="drawToggleBtn" title="画线">✏️</button>
+      <button class="icon-btn" id="historyToggleBtn" title="历史记录">📋</button>
+      <button class="icon-btn" id="statsToggleBtn" title="进步统计">📊</button>
+      <button class="icon-btn" id="settingsToggleBtn" title="设置">⚙️</button>
+    </div>
+  </header>
+
+  <div class="tf-strip" id="tfStrip">
+    <button class="tf-chip" data-tf="1m">1m</button>
+    <button class="tf-chip" data-tf="5m">5m</button>
+    <button class="tf-chip active" data-tf="15m">15m</button>
+    <button class="tf-chip" data-tf="30m">30m</button>
+    <button class="tf-chip" data-tf="1h">1h</button>
+    <button class="tf-chip" data-tf="4h">4h</button>
+    <button class="tf-chip" data-tf="1d">1d</button>
+  </div>
+
+  <div class="chart-wrap">
+    <div id="chart-container"></div>
+    <canvas id="drawOverlay"></canvas>
+    <div class="hud-mini" id="hudMini" style="display:none;"></div>
+    <div class="draw-toolbar" id="drawToolbar" style="display:none;">
+      <button data-mode="trend">趋势线</button>
+      <button data-mode="hline">水平线</button>
+      <button data-mode="fib">斐波那契</button>
+      <button id="undoDrawBtn">撤销</button>
+      <button id="clearDrawBtn" class="danger">清空</button>
+      <button id="exitDrawBtn" class="exit">完成</button>
+    </div>
+    <div class="empty-state" id="emptyState">
+      <div class="empty-card">
+        <div class="empty-icon">📈</div>
+        <p>在设置里选好时间范围<br>随机截取一段 K 线，练习你的趋势判断</p>
+        <button id="emptyDrawBtn">打开设置</button>
+        <div class="empty-hint">复盘记录保存在本机，可导出备份</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="vol-container"></div>
+
+  <div class="progress-strip">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+
+  <footer class="dock">
+    <div class="dock-row" id="tradeRow">
+      <button class="dock-btn long" id="longBtn">▲ 开多</button>
+      <button class="dock-btn short" id="shortBtn">▼ 开空</button>
+    </div>
+    <div class="dock-row" id="pnlRow" style="display:none;">
+      <div class="pnl-box">
+        <span class="pos-tag" id="posTag">多</span>
+        <span class="pnl-val" id="pnlVal">0.00%</span>
+        <span class="tp-sl" id="tpSlTag"></span>
+        <button id="closeBtn">平仓</button>
+      </div>
+    </div>
+    <div class="dock-row">
+      <button class="dock-btn" id="stepBackBtn">⏮</button>
+      <button class="dock-btn primary" id="playBtn">▶ 播放</button>
+      <button class="dock-btn" id="stepFwdBtn">下一根 ▸</button>
+    </div>
+    <div class="dock-row">
+      <button class="dock-btn reveal" id="revealBtn">🔍 揭晓全部</button>
+      <select id="speedSel">
+        <option value="1500">0.5x</option>
+        <option value="700" selected>1x</option>
+        <option value="350">2x</option>
+        <option value="120">4x</option>
+      </select>
+    </div>
+  </footer>
+</div>
+
+<!-- 设置 -->
+<div class="backdrop" id="settingsBackdrop"></div>
+<div class="sheet" id="settingsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title"><h2>设置</h2><button class="close" data-close="settingsSheet">✕</button></div>
+  <div class="field">
+    <label>交易对</label>
+    <select id="symbol">
+      <option value="BTCUSDT" selected>BTC/USDT</option>
+      <option value="ETHUSDT">ETH/USDT</option>
+      <option value="SOLUSDT">SOL/USDT</option>
+      <option value="BNBUSDT">BNB/USDT</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>数据源</label>
+    <select id="dataSource">
+      <option value="binance" selected>Binance 实时行情</option>
+      <option value="demo">内置模拟行情（离线可用）</option>
+    </select>
+  </div>
+  <div class="field-row">
+    <div class="field"><label>范围起始</label><input type="date" id="rangeStart"></div>
+    <div class="field"><label>范围结束</label><input type="date" id="rangeEnd"></div>
+  </div>
+  <div class="field">
+    <label>起始可见 K 线数</label>
+    <input type="number" id="contextBars" value="100" min="20" max="300" step="10">
+  </div>
+  <button class="btn-full" id="drawBtn">🎲 随机抽取新片段</button>
+  <div class="hint">实时数据来自 Binance 公开接口；如果网络无法访问，可在上方切换到内置模拟行情，练习功能完全不受影响。抽取新片段会清空当前持仓、交易记录和画线。首次使用建议在浏览器菜单里「添加到主屏幕」。</div>
+</div>
+
+<!-- 开仓（止盈止损） -->
+<div class="backdrop" id="tradeBackdrop"></div>
+<div class="sheet" id="tradeSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title"><h2 id="tradeSheetTitle">开仓</h2><button class="close" data-close="tradeSheet">✕</button></div>
+  <div class="field">
+    <label>止盈（可选）</label>
+    <div class="chip-row" id="tpChips">
+      <button class="chip" data-val="1">+1%</button>
+      <button class="chip" data-val="2">+2%</button>
+      <button class="chip" data-val="3">+3%</button>
+      <button class="chip" data-val="5">+5%</button>
+      <button class="chip none active" data-val="">不设</button>
+    </div>
+    <input type="number" id="tpInput" placeholder="输入百分比，如 2" min="0" step="0.1">
+  </div>
+  <div class="field">
+    <label>止损（可选）</label>
+    <div class="chip-row" id="slChips">
+      <button class="chip" data-val="1">-1%</button>
+      <button class="chip" data-val="2">-2%</button>
+      <button class="chip" data-val="3">-3%</button>
+      <button class="chip" data-val="5">-5%</button>
+      <button class="chip none active" data-val="">不设</button>
+    </div>
+    <input type="number" id="slInput" placeholder="输入百分比，如 1" min="0" step="0.1">
+  </div>
+  <button class="btn-full" id="confirmOpenBtn">确认开仓</button>
+</div>
+
+<!-- 复盘报告 -->
+<div class="backdrop" id="reportBackdrop"></div>
+<div class="sheet" id="reportSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title"><h2>复盘报告</h2><button class="close" data-close="reportSheet">✕</button></div>
+  <div id="reportMeta" class="report-meta"></div>
+  <div id="reportVerdict" class="report-verdict"></div>
+  <div class="section-title">本轮走势统计</div>
+  <div class="stat-grid" id="reportStats"></div>
+  <div class="section-title">交易明细</div>
+  <div id="reportTrades"></div>
+  <div class="section-title">复盘笔记</div>
+  <textarea id="noteInput" rows="3" placeholder="写下你当时的判断依据和事后反思…"></textarea>
+  <button class="btn-full" id="saveNoteBtn">💾 保存笔记</button>
+  <button class="btn-full secondary" id="closeReportBtn">完成</button>
+</div>
+
+<!-- 历史记录 -->
+<div class="backdrop" id="historyBackdrop"></div>
+<div class="sheet" id="historySheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">
+    <h2>历史复盘</h2>
+    <div class="sheet-actions">
+      <button class="small-btn" id="exportCsvBtn">导出 CSV</button>
+      <button class="small-btn" id="exportJsonBtn">导出 JSON</button>
+    </div>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<!-- 历史详情 -->
+<div class="backdrop" id="detailBackdrop"></div>
+<div class="sheet" id="detailSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title"><h2>复盘详情</h2><button class="close" data-close="detailSheet">✕</button></div>
+  <div id="detailMeta" class="report-meta"></div>
+  <div class="stat-grid" id="detailStats"></div>
+  <div class="section-title">交易明细</div>
+  <div id="detailTrades"></div>
+  <div class="section-title">笔记</div>
+  <div id="detailNote" class="note-view">（无笔记）</div>
+  <button class="btn-full" id="replayAgainBtn">🔁 重新复盘这段</button>
+  <button class="btn-full danger" id="deleteSessionBtn">删除这条记录</button>
+</div>
+
+<!-- 进步统计 -->
+<div class="backdrop" id="statsBackdrop"></div>
+<div class="sheet" id="statsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title"><h2>进步统计</h2><button class="close" data-close="statsSheet">✕</button></div>
+  <div class="stat-row">
+    <div class="stat-box"><div class="k">累计复盘</div><div class="v" id="sTotal">0</div></div>
+    <div class="stat-box"><div class="k">总笔数</div><div class="v" id="sTrades">0</div></div>
+    <div class="stat-box"><div class="k">总胜率</div><div class="v" id="sWin">--</div></div>
+    <div class="stat-box"><div class="k">累计盈亏</div><div class="v" id="sPnl">0%</div></div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-box"><div class="k">最近7天复盘</div><div class="v" id="sWeek">0</div></div>
+    <div class="stat-box"><div class="k">平均每笔</div><div class="v" id="sAvg">--</div></div>
+  </div>
+  <div class="section-title">每轮正确率</div>
+  <canvas id="winCanvas" class="chart-canvas"></canvas>
+  <div class="section-title">累计盈亏曲线</div>
+  <canvas id="pnlCanvas" class="chart-canvas"></canvas>
+  <div class="hint">正确率按「有交易的复盘轮次」统计。数据只保存在本机浏览器中。</div>
+</div>
+
+<div id="status-toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
