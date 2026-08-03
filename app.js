@@ -18,7 +18,7 @@ const state = {
   candles:[], playing:false, timer:null,
   position:null, pendingDir:null, trades:[],
   drawMode:'none', drawings:[], drawTempPoint:null,
-  sessionId:null, sessionNote:'', reportShown:false
+  sessionId:null, sessionNote:'', reportShown:false, mode:'replay'
 };
 const memCache = {};
 
@@ -172,22 +172,30 @@ function generateDemoCandles(symbol, interval, startMs, endMs){
 }
 
 async function fetchKlinesRange(symbol, interval, startMs, endMs){
-  const all = [];
-  let cursor = startMs;
   const step = INTERVAL_MS[interval];
-  let guard = 0;
-  while(cursor < endMs && guard < 60){
-    guard++;
-    const url = `${BINANCE_BASE}?symbol=${symbol}&interval=${interval}&startTime=${cursor}&endTime=${endMs}&limit=1000`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error(`接口请求失败 (${res.status})，请检查网络是否能访问 Binance`);
-    const data = await res.json();
-    if(!data.length) break;
-    all.push(...data);
-    cursor = data[data.length-1][0] + step;
-    if(data.length < 1000) break;
+  const totalBars = Math.ceil((endMs - startMs)/step);
+  const CHUNK = 1000, MAX_PARALLEL = 8;
+  if(totalBars <= CHUNK){
+    return await fetchKlinesChunk(symbol, interval, startMs, endMs);
   }
-  return all.map(d=>({time:Math.floor(d[0]/1000), open:+d[1], high:+d[2], low:+d[3], close:+d[4], volume:+d[5]}));
+  const chunks = [];
+  for(let t = startMs; t < endMs; t += CHUNK*step){
+    chunks.push({start:t, end:Math.min(t + CHUNK*step, endMs)});
+  }
+  const results = [];
+  for(let i = 0; i < chunks.length; i += MAX_PARALLEL){
+    const batch = chunks.slice(i, i + MAX_PARALLEL);
+    const part = await Promise.all(batch.map(c => fetchKlinesChunk(symbol, interval, c.start, c.end)));
+    results.push(...part);
+  }
+  return mergeCandles(...results);
+}
+async function fetchKlinesChunk(symbol, interval, startMs, endMs){
+  const url = `${BINANCE_BASE}?symbol=${symbol}&interval=${interval}&startTime=${startMs}&endTime=${endMs}&limit=1000`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error(`接口请求失败 (${res.status})，请检查网络是否能访问 Binance`);
+  const data = await res.json();
+  return data.map(d=>({time:Math.floor(d[0]/1000), open:+d[1], high:+d[2], low:+d[3], close:+d[4], volume:+d[5]}));
 }
 function mergeCandles(...lists){
   const map = new Map();
@@ -282,6 +290,12 @@ window.addEventListener('orientationchange', ()=>setTimeout(resizeCharts, 200));
 /* ================= 复盘核心 ================= */
 async function startNewRound(){
   stopPlay();
+  state.mode = 'replay';
+  el('browseRow').style.display = 'none';
+  el('playRow').style.display = 'flex';
+  el('revealRow').style.display = 'flex';
+  el('progressStrip').style.display = '';
+  el('browseToggleBtn').classList.remove('active');
   const symbol = el('symbol').value;
   const rs = new Date(el('rangeStart').value + 'T00:00:00Z').getTime();
   const re = new Date(el('rangeEnd').value + 'T23:59:59Z').getTime();
@@ -328,6 +342,82 @@ async function loadAndRender(){
   renderChart();
 }
 
+/* ================= 直接看盘模式 ================= */
+function enterBrowseMode(){
+  if(state.mode === 'browse') return;
+  state.mode = 'browse';
+  stopPlay();
+  el('tradeRow').style.display = 'none';
+  el('pnlRow').style.display = 'none';
+  el('playRow').style.display = 'none';
+  el('revealRow').style.display = 'none';
+  el('progressStrip').style.display = 'none';
+  el('browseRow').style.display = 'flex';
+  el('browseToggleBtn').classList.add('active');
+  closeSheet('settingsSheet','settingsBackdrop');
+  toast('直接看盘：选好周期后点「加载」','');
+}
+function backToReplay(){
+  if(state.mode !== 'browse') return;
+  state.mode = 'replay';
+  stopPlay();
+  el('browseRow').style.display = 'none';
+  el('playRow').style.display = 'flex';
+  el('revealRow').style.display = 'flex';
+  el('progressStrip').style.display = '';
+  el('browseToggleBtn').classList.remove('active');
+  state.candles = [];
+  state.anchor = null;
+  state.trades = [];
+  state.position = null;
+  candleSeries.setData([]);
+  volSeries.setData([]);
+  candleSeries.setMarkers([]);
+  el('emptyState').style.display = 'flex';
+  el('hudMini').style.display = 'none';
+  el('progressFill').style.width = '0%';
+  el('progressText').textContent = '';
+  updateTradeButtons();
+}
+async function browseLoad(){
+  if(state.mode !== 'browse') return;
+  stopPlay();
+  const symbol = el('symbol').value;
+  const period = el('browsePeriod').value;
+  const interval = state.interval;
+  const step = INTERVAL_MS[interval];
+  const now = Date.now();
+  let start;
+  if(period === '1y') start = now - 365*86400000;
+  else if(period === '3y') start = now - 3*365*86400000;
+  else if(period === '5y') start = now - 5*365*86400000;
+  else start = 0;
+  const totalBars = Math.ceil((now - start)/step);
+  if(totalBars > 120000){
+    toast(`数据量过大（约 ${Math.round(totalBars/1000)}k 根），请换 1h/4h/1d 周期或缩短范围`,'error');
+    return;
+  }
+  state.symbol = symbol;
+  state.rangeStart = start;
+  state.rangeEnd = now;
+  toast('正在加载历史数据…','');
+  try{
+    const candles = await getData(symbol, interval, start, now);
+    if(!candles.length) throw new Error('该区间没有可用数据');
+    state.candles = candles;
+    state.currentTime = candles[candles.length-1].time*1000;
+    state.trades = [];
+    state.position = null;
+    refreshMarkers();
+    el('emptyState').style.display = 'none';
+    el('hudMini').style.display = 'flex';
+    renderChart();
+    toast(`已加载 ${candles.length.toLocaleString()} 根 · ${interval} · 可直接缩放拖动`, 'ok');
+  }catch(err){
+    toast(err.message || String(err), 'error');
+  }
+}
+
 function visibleCandles(){ return state.candles.filter(c => c.time*1000 <= state.currentTime); }
 
 function renderChart(){
@@ -347,13 +437,14 @@ function updateHud(visible){
   if(!visible.length) return;
   const last = visible[visible.length-1], first = visible[0];
   const chg = (last.close - first.open)/first.open*100;
+  const chgLabel = state.mode === 'browse' ? '区间' : '本轮';
   el('hudMini').innerHTML =
     `<span class="hud-time">${fmtTime(last.time*1000)}</span>` +
     `<span>O<b>${fmtPrice(last.open)}</b></span>` +
     `<span>H<b>${fmtPrice(last.high)}</b></span>` +
     `<span>L<b>${fmtPrice(last.low)}</b></span>` +
     `<span>C<b class="${last.close>=last.open?'up':'down'}">${fmtPrice(last.close)}</b></span>` +
-    `<span class="hud-chg ${chg>=0?'up':'down'}">本轮 ${fmtPct(chg)}</span>`;
+    `<span class="hud-chg ${chg>=0?'up':'down'}">${chgLabel} ${fmtPct(chg)}</span>`;
 }
 function updateProgress(revealed, total){
   const pct = total ? Math.round(revealed/total*100) : 0;
@@ -403,6 +494,7 @@ function togglePlay(){ state.playing ? stopPlay() : play(); }
 async function switchInterval(newInterval){
   if(newInterval === state.interval) return;
   state.interval = newInterval;
+  if(state.mode === 'browse'){ browseLoad(); return; }
   if(!state.anchor) return;
   stopPlay();
   state.reportShown = false;
@@ -1016,6 +1108,9 @@ function initEvents(){
 
   el('settingsToggleBtn').addEventListener('click', ()=>openSheet('settingsSheet','settingsBackdrop'));
   el('emptyDrawBtn').addEventListener('click', ()=>openSheet('settingsSheet','settingsBackdrop'));
+  el('browseToggleBtn').addEventListener('click', ()=>{ state.mode === 'browse' ? backToReplay() : enterBrowseMode(); });
+  el('browseLoadBtn').addEventListener('click', browseLoad);
+  el('browseBackBtn').addEventListener('click', backToReplay);
   el('drawBtn').addEventListener('click', startNewRound);
   el('longBtn').addEventListener('click', ()=>openPositionSheet('long'));
   el('shortBtn').addEventListener('click', ()=>openPositionSheet('short'));
