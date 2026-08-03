@@ -229,6 +229,16 @@ async function getData(symbol, interval, startMs, endMs){
 }
 
 /* ================= 图表 ================= */
+if(typeof LightweightCharts === 'undefined'){
+  const es = el('emptyState');
+  const icon = es.querySelector('.empty-icon');
+  const p = es.querySelector('p');
+  const btn = es.querySelector('button');
+  if(icon) icon.textContent = '⚠️';
+  if(p) p.innerHTML = '图表组件加载失败<br>请检查网络后刷新重试';
+  if(btn) btn.style.display = 'none';
+  throw new Error('lightweight-charts script not loaded');
+}
 const chart = LightweightCharts.createChart(el('chart-container'), {
   layout:{ background:{color:'transparent'}, textColor:'#5c6b82', fontFamily:'-apple-system, PingFang SC, Microsoft YaHei, sans-serif', fontSize:11 },
   grid:{ vertLines:{color:'rgba(30,60,100,0.045)'}, horzLines:{color:'rgba(30,60,100,0.045)'} },
