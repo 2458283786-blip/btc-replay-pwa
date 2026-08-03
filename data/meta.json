@@ -1,0 +1,467 @@
+{
+  "packDate": "2026-08-03T12:59:25.967Z",
+  "files": {
+    "BNBUSDT_1d": {
+      "intervalMs": 86400000,
+      "years": {
+        "2020": {
+          "file": "data/BNBUSDT_1d_2020.csv.gz",
+          "count": 149,
+          "start": 1596585600000,
+          "end": 1609372800000
+        },
+        "2021": {
+          "file": "data/BNBUSDT_1d_2021.csv.gz",
+          "count": 365,
+          "start": 1609459200000,
+          "end": 1640908800000
+        },
+        "2022": {
+          "file": "data/BNBUSDT_1d_2022.csv.gz",
+          "count": 365,
+          "start": 1640995200000,
+          "end": 1672444800000
+        },
+        "2023": {
+          "file": "data/BNBUSDT_1d_2023.csv.gz",
+          "count": 365,
+          "start": 1672531200000,
+          "end": 1703980800000
+        },
+        "2024": {
+          "file": "data/BNBUSDT_1d_2024.csv.gz",
+          "count": 366,
+          "start": 1704067200000,
+          "end": 1735603200000
+        },
+        "2025": {
+          "file": "data/BNBUSDT_1d_2025.csv.gz",
+          "count": 365,
+          "start": 1735689600000,
+          "end": 1767139200000
+        },
+        "2026": {
+          "file": "data/BNBUSDT_1d_2026.csv.gz",
+          "count": 215,
+          "start": 1767225600000,
+          "end": 1785715200000
+        }
+      },
+      "start": 1596585600000,
+      "end": 1785715200000
+    },
+    "BNBUSDT_1h": {
+      "intervalMs": 3600000,
+      "years": {
+        "2021": {
+          "file": "data/BNBUSDT_1h_2021.csv.gz",
+          "count": 3587,
+          "start": 1628082000000,
+          "end": 1640991600000
+        },
+        "2022": {
+          "file": "data/BNBUSDT_1h_2022.csv.gz",
+          "count": 8760,
+          "start": 1640995200000,
+          "end": 1672527600000
+        },
+        "2023": {
+          "file": "data/BNBUSDT_1h_2023.csv.gz",
+          "count": 8760,
+          "start": 1672531200000,
+          "end": 1704063600000
+        },
+        "2024": {
+          "file": "data/BNBUSDT_1h_2024.csv.gz",
+          "count": 8784,
+          "start": 1704067200000,
+          "end": 1735686000000
+        },
+        "2025": {
+          "file": "data/BNBUSDT_1h_2025.csv.gz",
+          "count": 8760,
+          "start": 1735689600000,
+          "end": 1767222000000
+        },
+        "2026": {
+          "file": "data/BNBUSDT_1h_2026.csv.gz",
+          "count": 5149,
+          "start": 1767225600000,
+          "end": 1785758400000
+        }
+      },
+      "start": 1628082000000,
+      "end": 1785758400000
+    },
+    "BNBUSDT_5m": {
+      "intervalMs": 300000,
+      "years": {
+        "2024": {
+          "file": "data/BNBUSDT_5m_2024.csv.gz",
+          "count": 43333,
+          "start": 1722689700000,
+          "end": 1735689300000
+        },
+        "2025": {
+          "file": "data/BNBUSDT_5m_2025.csv.gz",
+          "count": 105120,
+          "start": 1735689600000,
+          "end": 1767225300000
+        },
+        "2026": {
+          "file": "data/BNBUSDT_5m_2026.csv.gz",
+          "count": 61787,
+          "start": 1767225600000,
+          "end": 1785761400000
+        }
+      },
+      "start": 1722689700000,
+      "end": 1785761400000
+    },
+    "BTCUSDT_1d": {
+      "intervalMs": 86400000,
+      "years": {
+        "2020": {
+          "file": "data/BTCUSDT_1d_2020.csv.gz",
+          "count": 149,
+          "start": 1596585600000,
+          "end": 1609372800000
+        },
+        "2021": {
+          "file": "data/BTCUSDT_1d_2021.csv.gz",
+          "count": 365,
+          "start": 1609459200000,
+          "end": 1640908800000
+        },
+        "2022": {
+          "file": "data/BTCUSDT_1d_2022.csv.gz",
+          "count": 365,
+          "start": 1640995200000,
+          "end": 1672444800000
+        },
+        "2023": {
+          "file": "data/BTCUSDT_1d_2023.csv.gz",
+          "count": 365,
+          "start": 1672531200000,
+          "end": 1703980800000
+        },
+        "2024": {
+          "file": "data/BTCUSDT_1d_2024.csv.gz",
+          "count": 366,
+          "start": 1704067200000,
+          "end": 1735603200000
+        },
+        "2025": {
+          "file": "data/BTCUSDT_1d_2025.csv.gz",
+          "count": 365,
+          "start": 1735689600000,
+          "end": 1767139200000
+        },
+        "2026": {
+          "file": "data/BTCUSDT_1d_2026.csv.gz",
+          "count": 215,
+          "start": 1767225600000,
+          "end": 1785715200000
+        }
+      },
+      "start": 1596585600000,
+      "end": 1785715200000
+    },
+    "BTCUSDT_1h": {
+      "intervalMs": 3600000,
+      "years": {
+        "2021": {
+          "file": "data/BTCUSDT_1h_2021.csv.gz",
+          "count": 3587,
+          "start": 1628082000000,
+          "end": 1640991600000
+        },
+        "2022": {
+          "file": "data/BTCUSDT_1h_2022.csv.gz",
+          "count": 8760,
+          "start": 1640995200000,
+          "end": 1672527600000
+        },
+        "2023": {
+          "file": "data/BTCUSDT_1h_2023.csv.gz",
+          "count": 8760,
+          "start": 1672531200000,
+          "end": 1704063600000
+        },
+        "2024": {
+          "file": "data/BTCUSDT_1h_2024.csv.gz",
+          "count": 8784,
+          "start": 1704067200000,
+          "end": 1735686000000
+        },
+        "2025": {
+          "file": "data/BTCUSDT_1h_2025.csv.gz",
+          "count": 8760,
+          "start": 1735689600000,
+          "end": 1767222000000
+        },
+        "2026": {
+          "file": "data/BTCUSDT_1h_2026.csv.gz",
+          "count": 5149,
+          "start": 1767225600000,
+          "end": 1785758400000
+        }
+      },
+      "start": 1628082000000,
+      "end": 1785758400000
+    },
+    "BTCUSDT_5m": {
+      "intervalMs": 300000,
+      "years": {
+        "2024": {
+          "file": "data/BTCUSDT_5m_2024.csv.gz",
+          "count": 43334,
+          "start": 1722689400000,
+          "end": 1735689300000
+        },
+        "2025": {
+          "file": "data/BTCUSDT_5m_2025.csv.gz",
+          "count": 105120,
+          "start": 1735689600000,
+          "end": 1767225300000
+        },
+        "2026": {
+          "file": "data/BTCUSDT_5m_2026.csv.gz",
+          "count": 61786,
+          "start": 1767225600000,
+          "end": 1785761100000
+        }
+      },
+      "start": 1722689400000,
+      "end": 1785761100000
+    },
+    "ETHUSDT_1d": {
+      "intervalMs": 86400000,
+      "years": {
+        "2020": {
+          "file": "data/ETHUSDT_1d_2020.csv.gz",
+          "count": 149,
+          "start": 1596585600000,
+          "end": 1609372800000
+        },
+        "2021": {
+          "file": "data/ETHUSDT_1d_2021.csv.gz",
+          "count": 365,
+          "start": 1609459200000,
+          "end": 1640908800000
+        },
+        "2022": {
+          "file": "data/ETHUSDT_1d_2022.csv.gz",
+          "count": 365,
+          "start": 1640995200000,
+          "end": 1672444800000
+        },
+        "2023": {
+          "file": "data/ETHUSDT_1d_2023.csv.gz",
+          "count": 365,
+          "start": 1672531200000,
+          "end": 1703980800000
+        },
+        "2024": {
+          "file": "data/ETHUSDT_1d_2024.csv.gz",
+          "count": 366,
+          "start": 1704067200000,
+          "end": 1735603200000
+        },
+        "2025": {
+          "file": "data/ETHUSDT_1d_2025.csv.gz",
+          "count": 365,
+          "start": 1735689600000,
+          "end": 1767139200000
+        },
+        "2026": {
+          "file": "data/ETHUSDT_1d_2026.csv.gz",
+          "count": 215,
+          "start": 1767225600000,
+          "end": 1785715200000
+        }
+      },
+      "start": 1596585600000,
+      "end": 1785715200000
+    },
+    "ETHUSDT_1h": {
+      "intervalMs": 3600000,
+      "years": {
+        "2021": {
+          "file": "data/ETHUSDT_1h_2021.csv.gz",
+          "count": 3587,
+          "start": 1628082000000,
+          "end": 1640991600000
+        },
+        "2022": {
+          "file": "data/ETHUSDT_1h_2022.csv.gz",
+          "count": 8760,
+          "start": 1640995200000,
+          "end": 1672527600000
+        },
+        "2023": {
+          "file": "data/ETHUSDT_1h_2023.csv.gz",
+          "count": 8760,
+          "start": 1672531200000,
+          "end": 1704063600000
+        },
+        "2024": {
+          "file": "data/ETHUSDT_1h_2024.csv.gz",
+          "count": 8784,
+          "start": 1704067200000,
+          "end": 1735686000000
+        },
+        "2025": {
+          "file": "data/ETHUSDT_1h_2025.csv.gz",
+          "count": 8760,
+          "start": 1735689600000,
+          "end": 1767222000000
+        },
+        "2026": {
+          "file": "data/ETHUSDT_1h_2026.csv.gz",
+          "count": 5149,
+          "start": 1767225600000,
+          "end": 1785758400000
+        }
+      },
+      "start": 1628082000000,
+      "end": 1785758400000
+    },
+    "ETHUSDT_5m": {
+      "intervalMs": 300000,
+      "years": {
+        "2024": {
+          "file": "data/ETHUSDT_5m_2024.csv.gz",
+          "count": 43333,
+          "start": 1722689700000,
+          "end": 1735689300000
+        },
+        "2025": {
+          "file": "data/ETHUSDT_5m_2025.csv.gz",
+          "count": 105120,
+          "start": 1735689600000,
+          "end": 1767225300000
+        },
+        "2026": {
+          "file": "data/ETHUSDT_5m_2026.csv.gz",
+          "count": 61787,
+          "start": 1767225600000,
+          "end": 1785761400000
+        }
+      },
+      "start": 1722689700000,
+      "end": 1785761400000
+    },
+    "SOLUSDT_1d": {
+      "intervalMs": 86400000,
+      "years": {
+        "2021": {
+          "file": "data/SOLUSDT_1d_2021.csv.gz",
+          "count": 150,
+          "start": 1628035200000,
+          "end": 1640908800000
+        },
+        "2022": {
+          "file": "data/SOLUSDT_1d_2022.csv.gz",
+          "count": 365,
+          "start": 1640995200000,
+          "end": 1672444800000
+        },
+        "2023": {
+          "file": "data/SOLUSDT_1d_2023.csv.gz",
+          "count": 365,
+          "start": 1672531200000,
+          "end": 1703980800000
+        },
+        "2024": {
+          "file": "data/SOLUSDT_1d_2024.csv.gz",
+          "count": 366,
+          "start": 1704067200000,
+          "end": 1735603200000
+        },
+        "2025": {
+          "file": "data/SOLUSDT_1d_2025.csv.gz",
+          "count": 365,
+          "start": 1735689600000,
+          "end": 1767139200000
+        },
+        "2026": {
+          "file": "data/SOLUSDT_1d_2026.csv.gz",
+          "count": 215,
+          "start": 1767225600000,
+          "end": 1785715200000
+        }
+      },
+      "start": 1628035200000,
+      "end": 1785715200000
+    },
+    "SOLUSDT_1h": {
+      "intervalMs": 3600000,
+      "years": {
+        "2021": {
+          "file": "data/SOLUSDT_1h_2021.csv.gz",
+          "count": 3587,
+          "start": 1628082000000,
+          "end": 1640991600000
+        },
+        "2022": {
+          "file": "data/SOLUSDT_1h_2022.csv.gz",
+          "count": 8760,
+          "start": 1640995200000,
+          "end": 1672527600000
+        },
+        "2023": {
+          "file": "data/SOLUSDT_1h_2023.csv.gz",
+          "count": 8760,
+          "start": 1672531200000,
+          "end": 1704063600000
+        },
+        "2024": {
+          "file": "data/SOLUSDT_1h_2024.csv.gz",
+          "count": 8784,
+          "start": 1704067200000,
+          "end": 1735686000000
+        },
+        "2025": {
+          "file": "data/SOLUSDT_1h_2025.csv.gz",
+          "count": 8760,
+          "start": 1735689600000,
+          "end": 1767222000000
+        },
+        "2026": {
+          "file": "data/SOLUSDT_1h_2026.csv.gz",
+          "count": 5149,
+          "start": 1767225600000,
+          "end": 1785758400000
+        }
+      },
+      "start": 1628082000000,
+      "end": 1785758400000
+    },
+    "SOLUSDT_5m": {
+      "intervalMs": 300000,
+      "years": {
+        "2024": {
+          "file": "data/SOLUSDT_5m_2024.csv.gz",
+          "count": 43333,
+          "start": 1722689700000,
+          "end": 1735689300000
+        },
+        "2025": {
+          "file": "data/SOLUSDT_5m_2025.csv.gz",
+          "count": 105120,
+          "start": 1735689600000,
+          "end": 1767225300000
+        },
+        "2026": {
+          "file": "data/SOLUSDT_5m_2026.csv.gz",
+          "count": 61787,
+          "start": 1767225600000,
+          "end": 1785761400000
+        }
+      },
+      "start": 1722689700000,
+      "end": 1785761400000
+    }
+  }
+}
