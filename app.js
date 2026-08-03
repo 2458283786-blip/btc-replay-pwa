@@ -260,6 +260,10 @@ function resizeCharts(){
   chart.applyOptions({width:cw, height:ch});
   volChart.applyOptions({width:el('vol-container').clientWidth, height:el('vol-container').clientHeight});
   resizeOverlay();
+  if(state.candles.length){
+    chart.timeScale().fitContent();
+    renderOverlay();
+  }
 }
 new ResizeObserver(resizeCharts).observe(el('chart-container'));
 window.addEventListener('resize', resizeCharts);
