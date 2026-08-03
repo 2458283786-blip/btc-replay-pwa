@@ -3,7 +3,6 @@
 
 /* ================= 常量 ================= */
 const INTERVAL_MS = {'1m':60000,'5m':300000,'15m':900000,'30m':1800000,'1h':3600000,'4h':14400000,'1d':86400000};
-const BINANCE_BASE = 'https://api.binance.com/api/v3/klines';
 const FIB_LEVELS = [0,0.236,0.382,0.5,0.618,0.786,1];
 const UP = '#0c9a6c', DOWN = '#e5484d', ACCENT = '#1e6fff';
 const SETTINGS_KEY = 'btcReplay.settings.v1';
@@ -13,15 +12,13 @@ const MAX_SESSIONS = 200;
 /* ================= 状态 ================= */
 const state = {
   symbol:'BTCUSDT', interval:'15m',
-  rangeStart:null, rangeEnd:null, contextBars:100, dataSource:'binance',
+  rangeStart:null, rangeEnd:null, contextBars:100, dataSource:'bundle',
   anchor:null, currentTime:null,
   candles:[], playing:false, timer:null,
   position:null, pendingDir:null, trades:[],
   drawMode:'none', drawings:[], drawTempPoint:null,
   sessionId:null, sessionNote:'', reportShown:false, mode:'replay'
 };
-const memCache = {};
-
 const el = id => document.getElementById(id);
 
 /* ================= 工具函数 ================= */
@@ -89,39 +86,53 @@ function upsertSession(patch){
   return rec;
 }
 
-/* ================= IndexedDB 行情缓存（离线可用） ================= */
-let idbPromise = null;
-function openDB(){
-  if(idbPromise) return idbPromise;
-  idbPromise = new Promise((resolve, reject)=>{
-    const req = indexedDB.open('btcReplay', 1);
-    req.onupgradeneeded = ()=>{
-      const db = req.result;
-      if(!db.objectStoreNames.contains('klines')) db.createObjectStore('klines', {keyPath:'key'});
-    };
-    req.onsuccess = ()=>resolve(req.result);
-    req.onerror = ()=>reject(req.error);
+/* ================= 本地数据包 ================= */
+const BUNDLE_INTERVALS = ['5m','1h','1d'];
+let bundleMeta = null;
+const bundleCache = {};
+
+async function loadBundleFile(file){
+  if(bundleCache[file]) return bundleCache[file];
+  if(typeof DecompressionStream === 'undefined'){
+    throw new Error('浏览器不支持数据解压，请更新夸克浏览器或改用 Chrome');
+  }
+  const res = await fetch(file);
+  if(!res.ok) throw new Error(`本地数据文件加载失败 (${res.status})`);
+  const stream = res.body.pipeThrough(new DecompressionStream('gzip'));
+  const text = await new Response(stream).text();
+  const candles = [];
+  for(const line of text.split('\n')){
+    if(!line) continue;
+    const p = line.split(',');
+    candles.push({time:+p[0], open:+p[1], high:+p[2], low:+p[3], close:+p[4], volume:+p[5]});
+  }
+  bundleCache[file] = candles;
+  return candles;
+}
+
+async function initBundleMeta(){
+  try{
+    const res = await fetch('data/meta.json');
+    if(res.ok) bundleMeta = await res.json();
+  }catch(e){ bundleMeta = null; }
+}
+
+function bundlePackBounds(){
+  if(!bundleMeta) return null;
+  let start = Infinity, end = 0;
+  for(const k in bundleMeta.files){
+    const f = bundleMeta.files[k];
+    if(f.start < start) start = f.start;
+    if(f.end > end) end = f.end;
+  }
+  return (start === Infinity) ? null : {start, end};
+}
+
+function updateTfAvailability(){
+  const bundle = state.dataSource === 'bundle';
+  document.querySelectorAll('.tf-chip').forEach(b=>{
+    b.classList.toggle('disabled', bundle && !BUNDLE_INTERVALS.includes(b.dataset.tf));
   });
-  return idbPromise;
-}
-async function idbGet(key){
-  try{
-    const db = await openDB();
-    return await new Promise((res, rej)=>{
-      const r = db.transaction('klines','readonly').objectStore('klines').get(key);
-      r.onsuccess = ()=>res(r.result || null);
-      r.onerror = ()=>rej(r.error);
-    });
-  }catch(e){ return null; }
-}
-async function idbSet(key, val){
-  try{
-    const db = await openDB();
-    await new Promise((res, rej)=>{
-      const r = db.transaction('klines','readwrite').objectStore('klines').put(Object.assign({key}, val));
-      r.onsuccess = res; r.onerror = ()=>rej(r.error);
-    });
-  }catch(e){}
 }
 
 /* ================= 数据获取 ================= */
@@ -171,69 +182,34 @@ function generateDemoCandles(symbol, interval, startMs, endMs){
   return out;
 }
 
-async function fetchKlinesRange(symbol, interval, startMs, endMs){
-  const step = INTERVAL_MS[interval];
-  const totalBars = Math.ceil((endMs - startMs)/step);
-  const CHUNK = 1000, MAX_PARALLEL = 8;
-  if(totalBars <= CHUNK){
-    return await fetchKlinesChunk(symbol, interval, startMs, endMs);
-  }
-  const chunks = [];
-  for(let t = startMs; t < endMs; t += CHUNK*step){
-    chunks.push({start:t, end:Math.min(t + CHUNK*step, endMs)});
-  }
-  const results = [];
-  for(let i = 0; i < chunks.length; i += MAX_PARALLEL){
-    const batch = chunks.slice(i, i + MAX_PARALLEL);
-    const part = await Promise.all(batch.map(c => fetchKlinesChunk(symbol, interval, c.start, c.end)));
-    results.push(...part);
-  }
-  return mergeCandles(...results);
-}
-async function fetchKlinesChunk(symbol, interval, startMs, endMs){
-  const url = `${BINANCE_BASE}?symbol=${symbol}&interval=${interval}&startTime=${startMs}&endTime=${endMs}&limit=1000`;
-  const res = await fetch(url);
-  if(!res.ok) throw new Error(`接口请求失败 (${res.status})，请检查网络是否能访问 Binance`);
-  const data = await res.json();
-  return data.map(d=>({time:Math.floor(d[0]/1000), open:+d[1], high:+d[2], low:+d[3], close:+d[4], volume:+d[5]}));
-}
-function mergeCandles(...lists){
-  const map = new Map();
-  lists.forEach(list => (list||[]).forEach(c => map.set(c.time, c)));
-  return Array.from(map.values()).sort((a,b)=>a.time-b.time);
-}
 async function getData(symbol, interval, startMs, endMs){
-  const key = symbol + '_' + interval;
   if(state.dataSource === 'demo'){
     const candles = generateDemoCandles(symbol, interval, startMs, endMs);
-    memCache[key] = {startMs, endMs, candles};
     return candles.filter(c => c.time*1000 >= startMs && c.time*1000 <= endMs);
   }
-  const mem = memCache[key];
-  let chunk = null;
-  if(mem && mem.candles && mem.candles.length) chunk = mem;
-  else chunk = await idbGet(key);
-  if(chunk && chunk.startMs <= startMs && chunk.endMs >= endMs){
-    if(!mem || mem !== chunk) memCache[key] = chunk;
-    return chunk.candles.filter(c => c.time*1000 >= startMs && c.time*1000 <= endMs);
+  const key = symbol + '_' + interval;
+  const info = bundleMeta && bundleMeta.files[key];
+  if(!info) throw new Error(`${symbol} 暂无「${interval}」本地数据包（可用 5m/1h/1d）`);
+  const start = Math.max(startMs, info.start);
+  const end = Math.min(endMs, info.end);
+  if(start >= end) return [];
+  const years = Object.keys(info.years).map(Number).filter(y=>{
+    const f = info.years[y];
+    return f.end >= start && f.start <= end;
+  }).sort((a,b)=>a-b);
+  if(!years.length) return [];
+  const parts = [];
+  for(const y of years){
+    parts.push(await loadBundleFile(info.years[y].file));
   }
-  const fetchStart = chunk ? Math.min(chunk.startMs, startMs) : startMs;
-  const fetchEnd = chunk ? Math.max(chunk.endMs, endMs) : endMs;
-  let candles;
-  try{
-    candles = await fetchKlinesRange(symbol, interval, fetchStart, fetchEnd);
-  }catch(err){
-    if(chunk && chunk.candles.length){
-      memCache[key] = chunk;
-      return chunk.candles.filter(c => c.time*1000 >= startMs && c.time*1000 <= endMs);
+  const out = [];
+  for(const part of parts){
+    for(const c of part){
+      if(c.time*1000 >= start && c.time*1000 <= end) out.push(c);
     }
-    throw new Error(err.message + '。可到设置中切换到「内置模拟行情」继续练习');
   }
-  const merged = mergeCandles(chunk ? chunk.candles : [], candles);
-  const newChunk = {startMs:fetchStart, endMs:fetchEnd, candles:merged};
-  memCache[key] = newChunk;
-  idbSet(key, newChunk);
-  return merged.filter(c => c.time*1000 >= startMs && c.time*1000 <= endMs);
+  out.sort((a,b)=>a.time-b.time);
+  return out;
 }
 
 /* ================= 图表 ================= */
@@ -290,6 +266,7 @@ window.addEventListener('orientationchange', ()=>setTimeout(resizeCharts, 200));
 /* ================= 复盘核心 ================= */
 async function startNewRound(){
   stopPlay();
+  if(state.dataSource === 'bundle' && !bundleMeta) await initBundleMeta();
   state.mode = 'replay';
   el('browseRow').style.display = 'none';
   el('playRow').style.display = 'flex';
@@ -297,10 +274,19 @@ async function startNewRound(){
   el('progressStrip').style.display = '';
   el('browseToggleBtn').classList.remove('active');
   const symbol = el('symbol').value;
-  const rs = new Date(el('rangeStart').value + 'T00:00:00Z').getTime();
-  const re = new Date(el('rangeEnd').value + 'T23:59:59Z').getTime();
+  let rs = new Date(el('rangeStart').value + 'T00:00:00Z').getTime();
+  let re = new Date(el('rangeEnd').value + 'T23:59:59Z').getTime();
   const contextBars = Math.max(20, Math.min(300, parseInt(el('contextBars').value) || 100));
-  if(!rs || !re || re <= rs){ toast('请检查时间范围是否正确','error'); return; }
+  if(state.dataSource === 'bundle' && bundleMeta){
+    const bounds = bundlePackBounds();
+    if(bounds){
+      if(rs < bounds.start) rs = bounds.start;
+      if(re > bounds.end) re = bounds.end;
+      el('rangeStart').value = new Date(rs).toISOString().slice(0,10);
+      el('rangeEnd').value = new Date(re).toISOString().slice(0,10);
+    }
+  }
+  if(!rs || !re || re <= rs){ toast('请检查时间范围是否正确（是否超出本地数据包范围）','error'); return; }
 
   const intervalMs = INTERVAL_MS[state.interval];
   let minAnchor = rs + contextBars*intervalMs;
@@ -381,6 +367,7 @@ function backToReplay(){
 }
 async function browseLoad(){
   if(state.mode !== 'browse') return;
+  if(state.dataSource === 'bundle' && !bundleMeta) await initBundleMeta();
   stopPlay();
   const symbol = el('symbol').value;
   const period = el('browsePeriod').value;
@@ -1130,7 +1117,7 @@ function initEvents(){
 
   el('tfStrip').addEventListener('click', e=>{
     const btn = e.target.closest('.tf-chip');
-    if(!btn) return;
+    if(!btn || btn.classList.contains('disabled')) return;
     document.querySelectorAll('.tf-chip').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
     switchInterval(btn.dataset.tf);
@@ -1147,7 +1134,12 @@ function initEvents(){
   el('dataSource').addEventListener('change', e=>{
     state.dataSource = e.target.value;
     saveSettings();
-    toast(state.dataSource === 'demo' ? '已切换到内置模拟行情' : '已切换到 Binance 实时行情', 'ok');
+    updateTfAvailability();
+    if(state.dataSource === 'bundle' && !BUNDLE_INTERVALS.includes(state.interval)){
+      state.interval = '5m';
+      document.querySelectorAll('.tf-chip').forEach(b=>b.classList.toggle('active', b.dataset.tf === '5m'));
+    }
+    toast(state.dataSource === 'demo' ? '已切换到内置模拟行情' : '已切换到本地数据包', 'ok');
   });
 }
 
@@ -1178,8 +1170,29 @@ window.addEventListener('beforeinstallprompt', e=>{
   if(saved.rangeStart) el('rangeStart').value = saved.rangeStart;
   if(saved.rangeEnd) el('rangeEnd').value = saved.rangeEnd;
   if(saved.contextBars) el('contextBars').value = saved.contextBars;
-  if(saved.dataSource) el('dataSource').value = saved.dataSource;
-  state.dataSource = el('dataSource').value;
+  const ds = (saved.dataSource && ['bundle','demo'].includes(saved.dataSource)) ? saved.dataSource : 'bundle';
+  el('dataSource').value = ds;
+  state.dataSource = ds;
+
+  (async function applyBundle(){
+    await initBundleMeta();
+    const bounds = bundlePackBounds();
+    if(bounds){
+      const packEndDate = new Date(bounds.end).toISOString().slice(0,10);
+      const packStartDate = new Date(bounds.start).toISOString().slice(0,10);
+      const todayStr = today.toISOString().slice(0,10);
+      el('rangeEnd').value = packEndDate < todayStr ? packEndDate : todayStr;
+      const defStart = new Date(bounds.end - 120*86400000).toISOString().slice(0,10);
+      el('rangeStart').value = defStart < packStartDate ? packStartDate : defStart;
+      const hint = el('dataPackHint');
+      if(hint) hint.textContent = `本地数据包：${packStartDate} ~ ${packEndDate}。5m 近 2 年 / 1h 近 5 年 / 1d 近 6 年，数据截至打包日，不自动更新。`;
+    }
+    if(state.dataSource === 'bundle' && !BUNDLE_INTERVALS.includes(state.interval)){
+      state.interval = '5m';
+      document.querySelectorAll('.tf-chip').forEach(b=>b.classList.toggle('active', b.dataset.tf === '5m'));
+    }
+    updateTfAvailability();
+  })();
 
   initEvents();
   resizeCharts();
