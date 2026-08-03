@@ -22,6 +22,7 @@
     <div class="brand">K线复盘<span class="brand-sub">趋势判断训练</span></div>
     <div class="topbar-actions">
       <button class="icon-btn" id="drawToggleBtn" title="画线">✏️</button>
+      <button class="icon-btn" id="browseToggleBtn" title="直接看盘">📈</button>
       <button class="icon-btn" id="historyToggleBtn" title="历史记录">📋</button>
       <button class="icon-btn" id="statsToggleBtn" title="进步统计">📊</button>
       <button class="icon-btn" id="settingsToggleBtn" title="设置">⚙️</button>
@@ -62,7 +63,7 @@
 
   <div id="vol-container"></div>
 
-  <div class="progress-strip">
+  <div class="progress-strip" id="progressStrip">
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-text" id="progressText"></div>
   </div>
@@ -80,12 +81,12 @@
         <button id="closeBtn">平仓</button>
       </div>
     </div>
-    <div class="dock-row">
+    <div class="dock-row" id="playRow">
       <button class="dock-btn" id="stepBackBtn">⏮</button>
       <button class="dock-btn primary" id="playBtn">▶ 播放</button>
       <button class="dock-btn" id="stepFwdBtn">下一根 ▸</button>
     </div>
-    <div class="dock-row">
+    <div class="dock-row" id="revealRow">
       <button class="dock-btn reveal" id="revealBtn">🔍 揭晓全部</button>
       <select id="speedSel">
         <option value="1500">0.5x</option>
@@ -93,6 +94,16 @@
         <option value="350">2x</option>
         <option value="120">4x</option>
       </select>
+    </div>
+    <div class="dock-row span2" id="browseRow" style="display:none;">
+      <select id="browsePeriod">
+        <option value="1y">近 1 年</option>
+        <option value="3y" selected>近 3 年</option>
+        <option value="5y">近 5 年</option>
+        <option value="all">全部</option>
+      </select>
+      <button class="dock-btn primary" id="browseLoadBtn">加载</button>
+      <button class="dock-btn" id="browseBackBtn">返回训练</button>
     </div>
   </footer>
 </div>
