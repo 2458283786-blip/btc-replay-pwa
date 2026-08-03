@@ -1,3 +1,5 @@
 # 测试截图产物
 _test_*.png
 _preview_*.png
+data/*.bin
+data/*.bin.gz
